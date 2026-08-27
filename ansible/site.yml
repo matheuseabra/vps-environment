@@ -9,9 +9,16 @@
     dev_authorized_key: ""
     tailscale_hostname: matheuseabra-vps
     tailscale_auth_key: ""
+    dotfiles_repo: https://github.com/matheuseabra/dotfiles.git
+    # Pin the source for reproducible VPS builds. Update deliberately.
+    dotfiles_version: 3ac83ac20703a30517382fbdc5625efd40bf856b
+    dotfiles_packages:
+      - btop
+      - starship
 
   roles:
     - role: base
     - role: ssh
     - role: developer
+    - role: dotfiles
     - role: tailscale

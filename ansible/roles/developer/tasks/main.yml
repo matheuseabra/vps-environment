@@ -18,4 +18,7 @@
     mode: "0644"
     marker: "# {mark} managed VPS environment"
     block: |
-      export PATH="$HOME/.opencode/bin:$PATH"
+      export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
+      if command -v starship >/dev/null 2>&1; then
+        eval "$(starship init bash)"
+      fi

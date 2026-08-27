@@ -1,0 +1,32 @@
+---
+- name: Clone the pinned dotfiles repository
+  become_user: "{{ dev_user }}"
+  ansible.builtin.git:
+    repo: "{{ dotfiles_repo }}"
+    dest: "/home/{{ dev_user }}/dotfiles"
+    version: "{{ dotfiles_version }}"
+    update: true
+
+- name: Install Starship for the developer user
+  become_user: "{{ dev_user }}"
+  ansible.builtin.shell: |
+    if ! command -v starship >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/starship" ]; then
+      mkdir -p "$HOME/.local/bin"
+      curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Deploy selected portable dotfiles with GNU Stow
+  become_user: "{{ dev_user }}"
+  ansible.builtin.command:
+    argv: [stow, --target, "/home/{{ dev_user }}", --restow, "{{ item }}"]
+    chdir: "/home/{{ dev_user }}/dotfiles"
+  loop: "{{ dotfiles_packages }}"
+
+- name: Ensure the developer owns the dotfiles checkout
+  ansible.builtin.file:
+    path: "/home/{{ dev_user }}/dotfiles"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    recurse: true

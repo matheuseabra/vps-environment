@@ -17,6 +17,7 @@
   ansible.builtin.apt:
     name:
       - build-essential
+      - btop
       - ca-certificates
       - curl
       - fail2ban
@@ -25,6 +26,7 @@
       - htop
       - jq
       - ripgrep
+      - stow
       - sudo
       - tmux
       - unzip

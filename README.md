@@ -4,7 +4,8 @@ Reproducible setup for a developer VPS running Ubuntu, OpenCode, Tailscale, and 
 
 ## Design
 
-- **Ansible** provisions the VPS.
+- **Ansible** provisions the VPS and manages users, packages, services, and system files.
+- **GNU Stow** deploys selected portable dotfiles from the pinned `dotfiles` repository.
 - **OpenCode** runs as the non-root `dev` user.
 - **tmux** keeps remote shells and OpenCode sessions alive.
 - **Herdr** stays local on macOS; use `ssh` plus remote tmux to avoid nested Herdr sessions.
@@ -39,7 +40,7 @@ ansible-playbook \
   -e "dev_authorized_key=$(cat ~/.ssh/id_ed25519.pub)"
 ```
 
-The playbook creates the `dev` user, adds it to `sudo`, installs the developer packages and OpenCode, configures SSH keep-alives, and installs Tailscale.
+The playbook creates the `dev` user, adds it to `sudo`, installs the developer packages and OpenCode, deploys the portable `btop` and `starship` configs from the pinned dotfiles repository, configures SSH keep-alives, and installs Tailscale.
 
 ### Tailscale authentication
 
@@ -66,6 +67,14 @@ ssh dev@YOUR_TAILSCALE_IP
 ```
 
 Update your local SSH config with that address or its MagicDNS name.
+
+## Dotfiles strategy
+
+The macOS dotfiles repository is intentionally not stowed in full on the VPS. Its portable packages are useful, but these packages are macOS-specific or desktop-only and stay local: `ghostty`, `karabiner`, `skhd`, `cava`, `druk`, `herdr`, wallpapers, and the current `zsh` package. The `git` package uses the macOS Keychain, and the OpenCode config contains macOS-only MCP paths, so neither is deployed to Linux.
+
+The Ansible `dotfiles` role clones a pinned commit and stows only the portable packages listed in `dotfiles_packages`. This keeps responsibilities separate: Ansible installs prerequisites and controls machine state; Stow links user configuration files into `$HOME`.
+
+To add another package, verify that its config has no macOS-only paths or desktop dependencies, then add it to `dotfiles_packages` in `ansible/site.yml`.
 
 ## Daily remote workflow
 
