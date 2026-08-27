@@ -25,9 +25,9 @@
       - git
       - jq
       - ripgrep
-      - stow
       - sudo
       - tmux
+      - zsh
     state: present
 
 - name: Enable the SSH jail in Fail2ban
@@ -51,7 +51,7 @@
 - name: Create the developer user
   ansible.builtin.user:
     name: "{{ dev_user }}"
-    shell: /bin/bash
+    shell: /usr/bin/zsh
     create_home: true
     groups: sudo
     append: true

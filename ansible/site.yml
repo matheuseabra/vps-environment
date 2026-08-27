@@ -11,11 +11,8 @@
     tailscale_auth_key: ""
     dotfiles_repo: https://github.com/matheuseabra/dotfiles.git
     # Pin the source for reproducible VPS builds. Update deliberately.
-    dotfiles_version: 3ac83ac20703a30517382fbdc5625efd40bf856b
-    dotfiles_packages:
-      - btop
-      - druk
-      - starship
+    dotfiles_version: 113ddc88e607150ffd706028e048a94fa6f62cf4
+    chezmoi_version: "2.72.0"
 
   roles:
     - role: base

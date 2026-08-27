@@ -1,9 +1,46 @@
 ---
-- name: Clone the pinned dotfiles repository
+- name: Support ChezMoi release architectures
+  ansible.builtin.assert:
+    that:
+      - ansible_architecture in ['x86_64', 'aarch64']
+    fail_msg: "No pinned chezmoi release is configured for {{ ansible_architecture }}."
+
+- name: Set the ChezMoi release architecture
+  ansible.builtin.set_fact:
+    chezmoi_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] }}"
+    chezmoi_checksum: "{{ {'x86_64': '0d6665b96c527d57fdc562bf19e808f80f48c2d977062c03e3e65c6b09eafbce', 'aarch64': 'e79a27621256390f03166d3965e6a1946f983a096c4d90f02c43d2aa5b563728'}[ansible_architecture] }}"
+
+- name: Create the developer binary directory
+  ansible.builtin.file:
+    path: "/home/{{ dev_user }}/.local/bin"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
+
+- name: Download the pinned ChezMoi release
+  ansible.builtin.get_url:
+    url: "https://github.com/twpayne/chezmoi/releases/download/v{{ chezmoi_version }}/chezmoi_{{ chezmoi_version }}_linux_{{ chezmoi_arch }}.tar.gz"
+    dest: "/tmp/chezmoi_{{ chezmoi_version }}_linux_{{ chezmoi_arch }}.tar.gz"
+    checksum: "sha256:{{ chezmoi_checksum }}"
+    mode: "0644"
+
+- name: Install ChezMoi for the developer user
+  ansible.builtin.unarchive:
+    src: "/tmp/chezmoi_{{ chezmoi_version }}_linux_{{ chezmoi_arch }}.tar.gz"
+    dest: "/home/{{ dev_user }}/.local/bin"
+    include:
+      - chezmoi
+    remote_src: true
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
+
+- name: Clone the pinned dotfiles source state
   become_user: "{{ dev_user }}"
   ansible.builtin.git:
     repo: "{{ dotfiles_repo }}"
-    dest: "/home/{{ dev_user }}/dotfiles"
+    dest: "/home/{{ dev_user }}/.local/share/chezmoi"
     version: "{{ dotfiles_version }}"
     update: true
 
@@ -11,22 +48,21 @@
   become_user: "{{ dev_user }}"
   ansible.builtin.shell: |
     if ! command -v starship >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/starship" ]; then
-      mkdir -p "$HOME/.local/bin"
       curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
     fi
   args:
     executable: /bin/bash
 
-- name: Deploy selected portable dotfiles with GNU Stow
+- name: Apply the pinned ChezMoi source state
   become_user: "{{ dev_user }}"
   ansible.builtin.command:
-    argv: [stow, --target, "/home/{{ dev_user }}", --restow, "{{ item }}"]
-    chdir: "/home/{{ dev_user }}/dotfiles"
-  loop: "{{ dotfiles_packages }}"
-
-- name: Ensure the developer owns the dotfiles checkout
-  ansible.builtin.file:
-    path: "/home/{{ dev_user }}/dotfiles"
-    owner: "{{ dev_user }}"
-    group: "{{ dev_user }}"
-    recurse: true
+    argv:
+      - "/home/{{ dev_user }}/.local/bin/chezmoi"
+      - --source
+      - "/home/{{ dev_user }}/.local/share/chezmoi"
+      - --destination
+      - "/home/{{ dev_user }}"
+      - apply
+      - --force
+  environment:
+    HOME: "/home/{{ dev_user }}"
