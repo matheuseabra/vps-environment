@@ -23,14 +23,30 @@
       - fail2ban
       - fd-find
       - git
-      - htop
       - jq
       - ripgrep
       - stow
       - sudo
       - tmux
-      - unzip
     state: present
+
+- name: Enable the SSH jail in Fail2ban
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/sshd.local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [sshd]
+      enabled = true
+      backend = systemd
+  notify: Restart Fail2ban
+
+- name: Ensure Fail2ban is enabled and running
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: started
 
 - name: Create the developer user
   ansible.builtin.user:

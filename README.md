@@ -6,9 +6,9 @@ Reproducible setup for a developer VPS running Ubuntu, OpenCode, Tailscale, and 
 
 - **Ansible** provisions the VPS and manages users, packages, services, and system files.
 - **GNU Stow** deploys selected portable dotfiles from the pinned `dotfiles` repository.
-- **OpenCode** runs as the non-root `dev` user.
+- **OpenCode** and **Druk** run as the non-root `dev` user.
 - **tmux** keeps remote shells and OpenCode sessions alive.
-- **Herdr** stays local on macOS; use `ssh` plus remote tmux to avoid nested Herdr sessions.
+- **Herdr** is not provisioned on the VPS; local Herdr remains a separate macOS choice.
 - **Tailscale** provides private access from your Mac and phone.
 - **Dokploy** is an explicit, separate install because its installer configures Docker Swarm.
 
@@ -40,7 +40,7 @@ ansible-playbook \
   -e "dev_authorized_key=$(cat ~/.ssh/id_ed25519.pub)"
 ```
 
-The playbook creates the `dev` user, adds it to `sudo`, installs the developer packages and OpenCode, deploys the portable `btop` and `starship` configs from the pinned dotfiles repository, configures SSH keep-alives, and installs Tailscale.
+The playbook creates the `dev` user, adds it to `sudo`, installs only the tools used by this setup, installs OpenCode and Druk, deploys the portable `btop`, Druk, and Starship configs from the pinned dotfiles repository, configures SSH keep-alives and Fail2ban, and installs Tailscale.
 
 ### Tailscale authentication
 
@@ -70,11 +70,11 @@ Update your local SSH config with that address or its MagicDNS name.
 
 ## Dotfiles strategy
 
-The macOS dotfiles repository is intentionally not stowed in full on the VPS. Its portable packages are useful, but these packages are macOS-specific or desktop-only and stay local: `ghostty`, `karabiner`, `skhd`, `cava`, `druk`, `herdr`, wallpapers, and the current `zsh` package. The `git` package uses the macOS Keychain, and the OpenCode config contains macOS-only MCP paths, so neither is deployed to Linux.
+The macOS dotfiles repository is intentionally not stowed in full on the VPS. The portable packages deployed here are `btop`, `druk`, and `starship`. These packages are macOS-specific or unnecessary on the VPS and stay local: `ghostty`, `karabiner`, `skhd`, `cava`, `herdr`, wallpapers, and the current `zsh` package. The `git` package uses the macOS Keychain, and the OpenCode config contains macOS-only MCP paths, so neither is deployed to Linux.
 
 The Ansible `dotfiles` role clones a pinned commit and stows only the portable packages listed in `dotfiles_packages`. This keeps responsibilities separate: Ansible installs prerequisites and controls machine state; Stow links user configuration files into `$HOME`.
 
-To add another package, verify that its config has no macOS-only paths or desktop dependencies, then add it to `dotfiles_packages` in `ansible/site.yml`.
+Druk is included because it is a self-contained terminal editor with Linux x64 and arm64 binaries, so it has no desktop dependency on the VPS. To add another package, verify that its config has no macOS-only paths or desktop dependencies, then add it to `dotfiles_packages` in `ansible/site.yml`.
 
 ## Daily remote workflow
 

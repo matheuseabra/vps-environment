@@ -9,6 +9,16 @@
   environment:
     HOME: "/home/{{ dev_user }}"
 
+- name: Install Druk for the developer user
+  become_user: "{{ dev_user }}"
+  ansible.builtin.shell: |
+    curl -fsSL https://druk.letstri.dev/install | bash
+  args:
+    executable: /bin/bash
+    creates: "/home/{{ dev_user }}/.druk/bin/druk"
+  environment:
+    HOME: "/home/{{ dev_user }}"
+
 - name: Add developer tool paths to bash
   ansible.builtin.blockinfile:
     path: "/home/{{ dev_user }}/.bashrc"
@@ -18,7 +28,7 @@
     mode: "0644"
     marker: "# {mark} managed VPS environment"
     block: |
-      export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
+      export PATH="$HOME/.druk/bin:$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
       if command -v starship >/dev/null 2>&1; then
         eval "$(starship init bash)"
       fi

@@ -1,17 +1,6 @@
+# Tools required to run this repository from macOS
 brew "ansible"
-brew "bat"
-brew "btop"
-brew "chezmoi"
-brew "eza"
-brew "fd"
-brew "fzf"
 brew "gh"
-brew "herdr"
-brew "jq"
-brew "ripgrep"
 brew "stow"
-brew "starship"
-brew "tmux"
-brew "zoxide"
 
 cask "tailscale"

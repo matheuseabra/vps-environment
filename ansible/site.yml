@@ -14,6 +14,7 @@
     dotfiles_version: 3ac83ac20703a30517382fbdc5625efd40bf856b
     dotfiles_packages:
       - btop
+      - druk
       - starship
 
   roles:
