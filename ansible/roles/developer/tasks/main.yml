@@ -1,0 +1,21 @@
+---
+- name: Install OpenCode for the developer user
+  become_user: "{{ dev_user }}"
+  ansible.builtin.shell: |
+    curl -fsSL https://opencode.ai/install | bash
+  args:
+    executable: /bin/bash
+    creates: "/home/{{ dev_user }}/.opencode/bin/opencode"
+  environment:
+    HOME: "/home/{{ dev_user }}"
+
+- name: Add developer tool paths to bash
+  ansible.builtin.blockinfile:
+    path: "/home/{{ dev_user }}/.bashrc"
+    create: true
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0644"
+    marker: "# {mark} managed VPS environment"
+    block: |
+      export PATH="$HOME/.opencode/bin:$PATH"

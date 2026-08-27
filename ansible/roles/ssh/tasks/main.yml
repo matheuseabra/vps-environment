@@ -1,0 +1,16 @@
+---
+- name: Configure SSH keep-alives
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-keepalive.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      ClientAliveInterval 60
+      ClientAliveCountMax 3
+      TCPKeepAlive yes
+  notify: Reload SSH
+
+- name: Validate SSH configuration
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false

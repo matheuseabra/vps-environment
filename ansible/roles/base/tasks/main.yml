@@ -1,0 +1,47 @@
+---
+- name: Require an SSH public key
+  ansible.builtin.assert:
+    that:
+      - dev_authorized_key | length > 20
+    fail_msg: >-
+      Pass the public key with
+      -e "dev_authorized_key=$(cat ~/.ssh/id_ed25519.pub)".
+
+- name: Update apt cache and upgrade packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Install base developer packages
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - ca-certificates
+      - curl
+      - fail2ban
+      - fd-find
+      - git
+      - htop
+      - jq
+      - ripgrep
+      - sudo
+      - tmux
+      - unzip
+    state: present
+
+- name: Create the developer user
+  ansible.builtin.user:
+    name: "{{ dev_user }}"
+    shell: /bin/bash
+    create_home: true
+    groups: sudo
+    append: true
+    state: present
+
+- name: Install the developer SSH key
+  ansible.posix.authorized_key:
+    user: "{{ dev_user }}"
+    key: "{{ dev_authorized_key }}"
+    state: present
+    manage_dir: true

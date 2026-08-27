@@ -1,0 +1,17 @@
+---
+- name: Provision developer VPS
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    dev_user: dev
+    dev_authorized_key: ""
+    tailscale_hostname: matheuseabra-vps
+    tailscale_auth_key: ""
+
+  roles:
+    - role: base
+    - role: ssh
+    - role: developer
+    - role: tailscale

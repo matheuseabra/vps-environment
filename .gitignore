@@ -1,0 +1,9 @@
+# Secrets and local Ansible state
+*.vault.yml
+.env
+.env.*
+!.env.example
+*.retry
+
+# macOS
+.DS_Store

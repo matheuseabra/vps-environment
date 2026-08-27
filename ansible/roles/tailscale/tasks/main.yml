@@ -1,0 +1,16 @@
+---
+- name: Install Tailscale
+  ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    executable: /bin/bash
+    creates: /usr/bin/tailscale
+
+- name: Authenticate Tailscale when an auth key is supplied
+  ansible.builtin.command:
+    argv:
+      - tailscale
+      - up
+      - --hostname={{ tailscale_hostname }}
+      - --auth-key={{ tailscale_auth_key }}
+  no_log: true
+  when: tailscale_auth_key | length > 0
