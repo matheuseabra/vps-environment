@@ -1,16 +1,18 @@
 # VPS Environment
 
-Reproducible setup for a developer VPS running Ubuntu, OpenCode, Tailscale, and Dokploy.
+Reproducible machine provisioning for an Ubuntu developer VPS running OpenCode, Tailscale, and Dokploy.
 
 ## Design
 
-- **Ansible** provisions the VPS and manages users, packages, services, and system files.
-- **GNU Stow** deploys selected portable dotfiles from the pinned `dotfiles` repository.
+- **Ansible** owns users, SSH, sudo, Apt packages, services, networking, and tool binaries.
+- **chezmoi** applies the pinned user-level source state from [`dotfiles`](https://github.com/matheuseabra/dotfiles).
 - **OpenCode** and **Druk** run as the non-root `dev` user.
 - **tmux** keeps remote shells and OpenCode sessions alive.
-- **Herdr** is not provisioned on the VPS; local Herdr remains a separate macOS choice.
+- **Herdr** is not provisioned on the VPS; it is a macOS-only user choice.
 - **Tailscale** provides private access from your Mac and phone.
 - **Dokploy** is an explicit, separate install because its installer configures Docker Swarm.
+
+Ansible installs the required binaries. Dotfiles owns their user-level configuration. Do not duplicate a dotfile in this repository.
 
 ## Prerequisites
 
@@ -40,7 +42,13 @@ ansible-playbook \
   -e "dev_authorized_key=$(cat ~/.ssh/id_ed25519.pub)"
 ```
 
-The playbook creates the `dev` user, adds it to `sudo`, installs only the tools used by this setup, installs OpenCode and Druk, deploys the portable `btop`, Druk, and Starship configs from the pinned dotfiles repository, configures SSH keep-alives and Fail2ban, and installs Tailscale.
+The playbook creates the `dev` user with Zsh, installs the system packages and OpenCode/Druk binaries, installs a checksum-pinned chezmoi release, checks out the pinned dotfiles commit, and applies its Linux source state. It also configures SSH keep-alives, Fail2ban, and Tailscale.
+
+### Dotfiles update
+
+`ansible/site.yml` pins `dotfiles_version` to a commit. Update that value deliberately after a reviewed dotfiles change. Re-run the playbook to update the VPS.
+
+The dotfiles role uses `chezmoi apply --force` so a VPS always converges to the pinned state. Do not make uncommitted configuration changes directly on the VPS.
 
 ### Tailscale authentication
 
@@ -66,24 +74,9 @@ After authentication, test the private address:
 ssh dev@YOUR_TAILSCALE_IP
 ```
 
-Update your local SSH config with that address or its MagicDNS name.
-
-## Dotfiles strategy
-
-The macOS dotfiles repository is intentionally not stowed in full on the VPS. The portable packages deployed here are `btop`, `druk`, and `starship`. These packages are macOS-specific or unnecessary on the VPS and stay local: `ghostty`, `karabiner`, `skhd`, `cava`, `herdr`, wallpapers, and the current `zsh` package. The `git` package uses the macOS Keychain, and the OpenCode config contains macOS-only MCP paths, so neither is deployed to Linux.
-
-The Ansible `dotfiles` role clones a pinned commit and stows only the portable packages listed in `dotfiles_packages`. This keeps responsibilities separate: Ansible installs prerequisites and controls machine state; Stow links user configuration files into `$HOME`.
-
-Druk is included because it is a self-contained terminal editor with Linux x64 and arm64 binaries, so it has no desktop dependency on the VPS. To add another package, verify that its config has no macOS-only paths or desktop dependencies, then add it to `dotfiles_packages` in `ansible/site.yml`.
+Update your local SSH configuration with that address or its MagicDNS name.
 
 ## Daily remote workflow
-
-Install tmux on an already-provisioned host if needed:
-
-```bash
-ssh contabo
-sudo apt install -y tmux
-```
 
 Start or reattach to the persistent remote session:
 
@@ -92,13 +85,6 @@ ssh -t contabo 'tmux new-session -A -s dev'
 ```
 
 Run OpenCode inside that session. Detach with `Ctrl-b d`; reconnect with the same command.
-
-The included shell snippet contains the local shortcut:
-
-```bash
-source dotfiles/zshrc.d/vps.zsh
-matheuseabra-vps
-```
 
 ## Install Dokploy
 
